@@ -18,12 +18,13 @@ enum DebugLevel {
     PRINT_NOTHING,
     PRINT_TIME,
     PRINT_COMMON,
+    PRINT_LINES_COUNT,
     PRINT_INLINE
 };
 
 int main(int argc, char *argv[])
 {
-    DebugLevel debugLevel = PRINT_TIME;
+    DebugLevel debugLevel = PRINT_COMMON;
 
     clock_t start, end;
     if (debugLevel >= PRINT_TIME)
@@ -45,10 +46,11 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    int fileLines = count(istreambuf_iterator<char>(dmrf), 
-             istreambuf_iterator<char>(), '\n');
-    if (debugLevel >= PRINT_COMMON)
+    if (debugLevel >= PRINT_LINES_COUNT) {
+        int fileLines = count(istreambuf_iterator<char>(dmrf), 
+            istreambuf_iterator<char>(), '\n');
         printf("File lines count: %d\n", fileLines);
+    }
 
     // Open binary file.
     fileName[fileLength - 3] = 'b';
@@ -92,7 +94,21 @@ int main(int argc, char *argv[])
             if (debugLevel >= 3)
                 printf("Float height: %f\n", heightFloat);
 
-            binf.write((char *)&heightFloat, sizeof(float));
+            // Change to int
+            heightFloat *= 100;
+            int heightInt = 12345;
+
+            // Change endian
+            char *ptr = (char *)&heightInt;
+            char t0, t1;
+            t0 = ptr[0];
+            t1 = ptr[1];
+            ptr[0] = ptr[3];
+            ptr[1] = ptr[2];
+            ptr[2] = t1;
+            ptr[3] = t0;
+
+            binf.write((char *)&heightInt, sizeof(int));
         }
     }
 
