@@ -108,6 +108,16 @@ int main(int argc, char *argv[])
 
             // If buffer is full, write number to file
             if ((bufferOffset + BITS_PER_VERTEX) >= 32) {
+                // Change endian
+                char *ptr = (char *)&buffer;
+                char t0, t1;
+                t0 = ptr[0];
+                t1 = ptr[1];
+                ptr[0] = ptr[3];
+                ptr[1] = ptr[2];
+                ptr[2] = t1;
+                ptr[3] = t0;
+
                 binf.write((char *)&buffer, sizeof(int));
 
                 // Prepare buffer for next value
