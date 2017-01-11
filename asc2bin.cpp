@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     dmrf.open(fileName);
     if (!dmrf.is_open()) {
         printf("Error opening the dmr file.\n");
-        return 0;
+        return 1;
     }
 
     int fileLines = count(istreambuf_iterator<char>(dmrf), 
@@ -54,22 +54,15 @@ int main(int argc, char *argv[])
     fileName[fileLength - 3] = 'b';
     fileName[fileLength - 2] = 'i';
     fileName[fileLength - 1] = 'n';
-    
-    // FILE* binf;
-    // 
-    // if ((binf = fopen(fileName, "wb")) != 0) {
-    //     printf("Error opening the bin file.\n");
-    // }
 
     ofstream binf (fileName, ios::out | ios::binary);
+    if (!binf.is_open()) {
+        printf("Error opening the binary file.\n");
+        return 1;
+    }
+
     if (debugLevel >= PRINT_COMMON)
         printf("Binary file opened.\n");
-
-    // Prepare the structure to write in binary file.
-    //char *buffer = (char*) malloc (bufferSize);
-    //if (buffer==NULL) exit (1);
-
-    //printf("byte buffer structure created.\n");
 
     char* currentLinePtr;
     char* heightString;
@@ -101,46 +94,9 @@ int main(int argc, char *argv[])
             if (debugLevel >= 3)
                 printf("Float height: %f\n", heightFloat);
 
-            // Normalisation
-            //heightFloat = (heightFloat / 2864.0) * 65536 + 0.5;
-            //if (debugLevel >= 3)
-            //    printf("Normalisation: %f\n", heightFloat);
-
-            // Change type
-            //unsigned short heightUshort = (unsigned short)heightFloat;
-            //if (debugLevel >= 3)
-            //    printf("ushort: %u\n\n", heightUshort);
-
-            // Change endian
-            //char *ptr = (char *)&heightUshort;
-            //char t;
-            //t = ptr[0];
-            //ptr[0] = ptr[1];
-            //ptr[1] = t;
-
-            //char *ptr = (char *)&heightFloat;
-            //char t0, t1;
-            //t0 = ptr[0];
-            //t1 = ptr[1];
-            //ptr[0] = ptr[3];
-            //ptr[1] = ptr[2];
-            //ptr[2] = t1;
-            //ptr[3] = t0;
-
             binf.write((char *)&heightFloat, sizeof(float));
-
-
-            // Write height to buffer
-            //buffer[i] = heightFloat;
-            //i += 2;
         }
     }
-
-    //// Actually write data to file
-    //binf.write(buffer, bufferSize);
-
-    // Cleanup.
-    //free(buffer);
 
     dmrf.close();
     binf.close();
