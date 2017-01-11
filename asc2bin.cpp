@@ -69,8 +69,6 @@ int main(int argc, char *argv[])
 
     int x = 0;
     int y = 0;
-    // Buffer pointer
-    //int i = 0;
 
     // Reading from .asc file, binary encoding and saving data in binary file.
     for (x = 0; x < sizeX; x++) {
