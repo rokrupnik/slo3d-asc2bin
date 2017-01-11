@@ -12,29 +12,27 @@
 #include <ctime>
 #include <algorithm>
 
+#define BITS_PER_VERTEX 19
+#define BITS_TO_SHIFT 13 // 32 - 19
+#define AREA_SIZE 1001
+
 using namespace std;
 
 enum DebugLevel {
     PRINT_NOTHING,
     PRINT_TIME,
     PRINT_COMMON,
-    PRINT_LINES_COUNT,
-    PRINT_INLINE
+    PRINT_INLINE,
+    PRINT_LINES_COUNT
 };
 
 int main(int argc, char *argv[])
 {
-    DebugLevel debugLevel = PRINT_COMMON;
+    DebugLevel debugLevel = (DebugLevel)atoi(argv[2]);
 
     clock_t start, end;
     if (debugLevel >= PRINT_TIME)
         start = clock();
-
-    int sizeX = 1001;
-    int sizeY = 1001;
-    int bufferSize = sizeX * sizeY * sizeof(float);
-    if (debugLevel >= PRINT_COMMON)
-        printf("bufferSize: %d\n\n", bufferSize);
 
     char *fileName = argv[1];
     int fileLength = strlen(fileName);
@@ -69,14 +67,16 @@ int main(int argc, char *argv[])
     int x = 0;
     int y = 0;
 
-    // Reading from .asc file, binary encoding and saving data in binary file.
-    for (x = 0; x < sizeX; x++) {
+    unsigned int buffer = 0;
+    char bufferOffset = 0;
 
-        for (y = 0; y < sizeY; y++) {
+    // Reading from .asc file, binary encoding and saving data in binary file.
+    for (x = 0; x < AREA_SIZE; x++) {
+        for (y = 0; y < AREA_SIZE; y++) {
             // Read from file
             char inputLine[28];
             dmrf >> inputLine;
-            if (debugLevel >= 3)
+            if (debugLevel >= PRINT_INLINE)
                 printf("line: %s\n", inputLine);
             currentLinePtr = inputLine;
 
@@ -84,28 +84,39 @@ int main(int argc, char *argv[])
             heightString = currentLinePtr + 20;
             // Ignore newline symbol
             heightString[strlen(heightString)] = '\0';
-            if (debugLevel >= 3)
+            if (debugLevel >= PRINT_INLINE)
                 printf("Raw height: %s\n", heightString);
             
             float heightFloat = atof(heightString);
-            if (debugLevel >= 3)
+            if (debugLevel >= PRINT_INLINE)
                 printf("Float height: %f\n", heightFloat);
 
             // Change to int
             heightFloat *= 100;
-            int heightInt = 12345;
+            unsigned int heightInt = (unsigned int)heightFloat;
+            if (debugLevel >= PRINT_INLINE)
+                printf("Int height: %u\n", heightInt);
 
-            // Change endian
-            char *ptr = (char *)&heightInt;
-            char t0, t1;
-            t0 = ptr[0];
-            t1 = ptr[1];
-            ptr[0] = ptr[3];
-            ptr[1] = ptr[2];
-            ptr[2] = t1;
-            ptr[3] = t0;
+            // Write value to buffer
+            unsigned int heightTmp = (heightInt << BITS_TO_SHIFT) >> bufferOffset;
+            if (debugLevel >= PRINT_INLINE)
+                printf("Buffer: %u and heightTmp: %u\n", buffer, heightTmp);
 
-            binf.write((char *)&heightInt, sizeof(int));
+            buffer = buffer | heightTmp;
+            if (debugLevel >= PRINT_INLINE)
+                printf("Buffer: %u and bufferOffset: %d\n\n", buffer, bufferOffset);
+
+            // If buffer is full, write number to file
+            if ((bufferOffset + BITS_PER_VERTEX) >= 32) {
+                binf.write((char *)&buffer, sizeof(int));
+
+                // Prepare buffer for next value
+                bufferOffset = (bufferOffset + BITS_PER_VERTEX) - 32;
+                buffer = heightInt << (32 - bufferOffset);
+            } else {
+                // Prepare buffer for next value
+                bufferOffset += BITS_PER_VERTEX;
+            }
         }
     }
 
