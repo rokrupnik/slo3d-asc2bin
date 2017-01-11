@@ -63,9 +63,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (debugLevel >= PRINT_COMMON)
-        printf("Binary file opened.\n");
-
     char* currentLinePtr;
     char* heightString;
 
